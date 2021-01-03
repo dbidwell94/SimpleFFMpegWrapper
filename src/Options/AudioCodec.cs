@@ -6,6 +6,6 @@ namespace FFMpegWrapper.Options
     public enum AudioCodec
     {
         none,
-        libvorbis
+        vorbis
     }
 }

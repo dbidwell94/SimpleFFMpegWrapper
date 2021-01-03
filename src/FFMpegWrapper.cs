@@ -68,14 +68,20 @@ namespace FFMpegWrapper
             return this;
         }
 
-        public MediaFileInfo GetInputInfo()
+        public async Task<MediaFileInfo> GetInputInfo()
         {
             if (InputFile == null)
             {
                 throw new FileNotFoundException("InputFile not specified. To set call wrapper.Input(file)");
             }
-            Process infoProcess = Process.Start(Path.Combine(FFMpegLocation, FFMpegFilenames.FFProbe), InputFile.FullName);
-            return StreamToMediaFileInfo.ParseStream(infoProcess.StandardOutput);
+            var startInfo = new ProcessStartInfo(Path.Combine(FFMpegLocation, FFMpegFilenames.FFProbe), InputFile.FullName);
+            startInfo.RedirectStandardError = true;
+            startInfo.RedirectStandardInput = true;
+            startInfo.RedirectStandardOutput = true;
+            Process infoProcess = new Process();
+            infoProcess.StartInfo = startInfo;
+            infoProcess.Start();
+            return await StreamToMediaFileInfo.ParseStream(infoProcess.StandardError);
         }
 
         public static async Task VerifyOrDownload()
