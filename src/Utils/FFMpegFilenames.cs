@@ -1,11 +1,10 @@
 using System.Runtime.InteropServices;
-using System;
 
 namespace FFMpegWrapper
 {
-    class FFMpegFilenames
+    public static class FFMpegFilenames
     {
-        public string FFMpeg
+        public static string FFMpeg
         {
             get
             {
@@ -21,11 +20,19 @@ namespace FFMpegWrapper
             }
         }
 
-        public string FFProbe
+        public static string FFProbe
         {
             get
             {
-                return "";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    return "ffprobe";
+                }
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return "ffprobe.exe";
+                }
+                else return "ffprobe";
             }
         }
     }

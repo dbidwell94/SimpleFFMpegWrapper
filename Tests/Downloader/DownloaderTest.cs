@@ -9,14 +9,14 @@ public class DownloadTest
 
     [TestCase]
     [Order(0)]
+    [Ignore("Under development; don't need to test download every time")]
     public async Task TestDownloadWorksCorrectly()
     {
         if (Directory.Exists(Wrapper.FFMpegLocation))
         {
             Directory.Delete(Wrapper.FFMpegLocation, true);
         }
-        var wrapper = new Wrapper();
-        await wrapper.VerifyOrDownload();
+        await Wrapper.VerifyOrDownload();
         Assert.That(File.Exists(Path.Combine(Wrapper.FFMpegLocation, "readme.txt")), "FFMpeg did not download / extract correctly");
     }
 
@@ -29,8 +29,7 @@ public class DownloadTest
             Assert.Fail("Files do not exist, test cannot fun");
         }
         FileInfo beforeInfo = new FileInfo(Path.Combine(Wrapper.FFMpegLocation, "readme.txt"));
-        var wrapper = new Wrapper();
-        await wrapper.VerifyOrDownload();
+        await Wrapper.VerifyOrDownload();
         if(!File.Exists(Path.Combine(Wrapper.FFMpegLocation, "readme.txt")))
         {
             Assert.Fail("File does not exist, test has failed");
