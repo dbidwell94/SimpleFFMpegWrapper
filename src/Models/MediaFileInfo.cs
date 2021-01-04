@@ -23,7 +23,7 @@ namespace FFMpegWrapper.Models
 
         public string Resolution { get; private set; }
 
-        public int Fps { get; private set; }
+        public double Fps { get; private set; }
 
         public MediaFileInfo(string stdOut)
         {
@@ -33,6 +33,7 @@ namespace FFMpegWrapper.Models
 
         private void ParseStdOut()
         {
+            System.Console.WriteLine(StdOut);
             CreationTime = ParseCreationDate();
             Duration = ParseDuration();
             Bitrate = ParseBitrate();
@@ -90,12 +91,13 @@ namespace FFMpegWrapper.Models
             return match;
         }
 
-        private int ParseFps()
+        private double ParseFps()
         {
-            var fpsRegex = new Regex(@"(?m)(?i), (\d{1,}) fps");
+            var fpsRegex = new Regex(@"(?m)(?i), (\d{1,}\.?\d{1,3}?) fps");
             var fpsMatch = fpsRegex.Match(StdOut);
             var match = fpsMatch.Groups[1].Value;
-            return int.Parse(match);
+            System.Console.WriteLine(match);
+            return double.Parse(match);
         }
     }
 }

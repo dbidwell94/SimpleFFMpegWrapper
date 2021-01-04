@@ -6,7 +6,7 @@ using FFMpegWrapper;
 using FFMpegWrapper.Options;
 
 [TestFixture]
-public class MediaFileInfoTest
+internal class MediaFileInfoTest
 {
     [TestCase]
     public async Task TestFileInfoProcessing()

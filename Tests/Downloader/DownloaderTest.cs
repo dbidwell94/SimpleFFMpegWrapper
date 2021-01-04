@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.IO;
 
 [TestFixture]
-public class DownloadTest
+internal class DownloadTest
 {
 
     [TestCase]
