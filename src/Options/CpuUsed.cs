@@ -1,3 +1,4 @@
+using System;
 namespace FFMpegWrapper.Options
 {
     /// <summary>
@@ -8,5 +9,23 @@ namespace FFMpegWrapper.Options
         One,
         Half,
         AllAvailable
+    }
+
+    public static class CpuUsedEnumExtensions
+    {
+        public static int GetCpuParam(this CpuUsed cpu)
+        {
+            switch (cpu)
+            {
+                case CpuUsed.One:
+                    return 1;
+                case CpuUsed.Half:
+                    return Environment.ProcessorCount / 2;
+                case CpuUsed.AllAvailable:
+                    return Environment.ProcessorCount;
+                default:
+                    return 1;
+            }
+        }
     }
 }

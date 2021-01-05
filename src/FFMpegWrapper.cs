@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using FFMpegWrapper.Downloader;
 using FFMpegWrapper.Options;
@@ -12,17 +13,34 @@ namespace FFMpegWrapper
     {
         public static string FFMpegLocation = FFMpegDownloader.FFMpegLocation;
 
-        public FileInfo InputFile { get; private set; }
+        private FileInfo InputFile;
 
-        public FileInfo OutputFile { get; private set; }
+        private FileInfo OutputFile;
 
-        public VideoCodec OutputVideoCodec { get; private set; } = VideoCodec.copy;
+        private bool OverwriteOutputFile = false;
 
-        public AudioCodec OutputAudioCodec { get; private set; } = AudioCodec.copy;
+        private VideoCodec OutputVideoCodec = VideoCodec.copy;
 
-        public CpuUsed ConverionCpusUsed { get; private set; } = CpuUsed.One;
+        private AudioCodec OutputAudioCodec = AudioCodec.copy;
 
-        public FrameRate OutputFrameRate { get; private set; } = FrameRate.DEFAULT;
+        private CpuUsed ConverionCpusUsed = CpuUsed.One;
+
+        private FrameRate OutputFrameRate = FrameRate.DEFAULT;
+
+        private Bitrate? OutputBitrate = null;
+
+        private Resolution? OutputResolution = null;
+
+        private CpuUsed NumCpuUsed = CpuUsed.One;
+
+        private bool PipedOutput = false;
+
+        #region Event System
+        public delegate void ConversionEventHandler(object sender, ConversionEventArgs e);
+        public event ConversionEventHandler OnConversionDidFinish;
+        public event ConversionEventHandler OnConversionDidFail;
+        public event ConversionEventHandler OnConversionDidStart;
+        #endregion
 
         public Wrapper()
         {
@@ -48,7 +66,9 @@ namespace FFMpegWrapper
             {
                 throw new FileLoadException($"{outputFile.Name} already exists and overwrite was not set to true");
             }
+            PipedOutput = false;
             OutputFile = outputFile;
+            OverwriteOutputFile = overwrite;
             return this;
         }
 
@@ -76,6 +96,80 @@ namespace FFMpegWrapper
             return this;
         }
 
+        /// <summary>
+        /// This method will ignore the video output and pipe the FFMpeg output directly to a StreamReader instead
+        /// </summary>
+        /// <returns>Realtime binary data from the conversion</returns>
+        public StreamReader WithPipedOutput()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// This method will run in the background. Please subscribe to <see cref="OnConversionDidStart" />,
+        /// <see cref="OnConversionDidFail" />, and <see cref="OnConversionDidFinish" /> events to get status updates and final
+        /// processed data
+        /// </summary>
+        public void BuildAndRun()
+        {
+            Stopwatch watch = new Stopwatch();
+            Task.Run(() =>
+            {
+                var processInfo = new ProcessStartInfo(Path.Combine(FFMpegLocation, FFMpegFilenames.FFMpeg));
+                string builtArgs = "-i ";
+                if (InputFile == null)
+                {
+                    throw new Exception("InputFile cannot be null");
+                }
+                if (OutputFile == null)
+                {
+                    throw new Exception("Output file cannot be null for BuildAndRun");
+                }
+                builtArgs += InputFile.FullName;
+                if (OverwriteOutputFile)
+                {
+                    builtArgs += " -y";
+                }
+                builtArgs += $" -c:v {OutputVideoCodec.ToString()}";
+                builtArgs += $" -c:a {OutputAudioCodec.ToString()}";
+                if (OutputBitrate.HasValue)
+                {
+                    builtArgs += $" -b:v {OutputBitrate.Value.ToNormalizedString()}";
+                }
+                if (OutputFrameRate != FrameRate.DEFAULT)
+                {
+                    builtArgs += $" -r {(int)OutputFrameRate}";
+                }
+                builtArgs += $" -cpu-used {NumCpuUsed.GetCpuParam()}";
+                if (OutputResolution.HasValue)
+                {
+                    builtArgs += $" -s {OutputResolution.Value.ToNormalizedString()}";
+                }
+                builtArgs += $" {OutputFile.FullName}";
+                processInfo.Arguments = builtArgs;
+                processInfo.RedirectStandardError = true;
+                processInfo.RedirectStandardInput = true;
+                processInfo.RedirectStandardOutput = true;
+                var process = new Process();
+                process.StartInfo = processInfo;
+                watch.Start();
+                process.Start();
+                System.Console.WriteLine("Process started -- firing event");
+                OnConversionDidStart?.Invoke(this, new ConversionEventArgs(InputFile, OutputFile));
+
+                process.ErrorDataReceived += (object sender, DataReceivedEventArgs args) =>
+                {
+                    OnConversionDidFail?.Invoke(this, new ConversionEventArgs(InputFile, OutputFile));
+                };
+
+                process.WaitForExit();
+                watch.Stop();
+            }).ContinueWith((res) =>
+            {
+                OnConversionDidFinish?.Invoke(this, new ConversionEventArgs(InputFile, OutputFile, watch.Elapsed));
+            });
+        }
+
         public async Task<MediaFileInfo> GetInputInfo()
         {
             if (!File.Exists(Path.Combine(FFMpegLocation, FFMpegFilenames.FFProbe)))
@@ -99,6 +193,12 @@ namespace FFMpegWrapper
         public static async Task VerifyOrDownload()
         {
             await FFMpegDownloader.DownloadAndVerifyAsync();
+        }
+
+
+        private static void LogEvent(object sender, ConversionEventArgs args)
+        {
+            System.Console.WriteLine("event fired");
         }
     }
 }
