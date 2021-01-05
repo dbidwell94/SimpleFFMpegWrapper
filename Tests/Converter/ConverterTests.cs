@@ -72,14 +72,19 @@ internal class ConverterTests
             .OutputAudioFormat(AudioCodec.copy)
             .OutputVideoFormat(VideoCodec.vp8)
             .OutputFramerate(FrameRate.FPS_10);
+
+        // Get metainfo about the input file
         var info = await wrapper.GetInputInfo();
+
         Assert.That(!OutputFile.Exists, "The output file already exists.");
         Assert.That(InputFile.Exists, "There is no input file for the test");
+
         wrapper.OnConversionDidStart += HandleConversionStartedEvent;
         wrapper.OnConversionDidFinish += HandleConversionCompletedEvent;
         wrapper.OnConversionDidFail += HandleConversionFailedEvent;
         wrapper.BuildAndRun();
-        await WaitForEvent(ConversionStartedEvent, "ConversionStartedEvent", 5);
+
+        await WaitForEvent(ConversionStartedEvent, "ConversionStartedEvent", 2);
         await WaitForEvent(ConversionCompletedEvent, "Conversion Completed");
 
         OutputFile = new FileInfo(OutputFile.FullName);
@@ -87,6 +92,8 @@ internal class ConverterTests
         Assert.That(OutputFile.Exists, "The output file did not get created..");
         var infoWrapper = new Wrapper();
         infoWrapper.Input(OutputFile);
+
+        // Get metainfo about newly created output file
         var outputInfo = await infoWrapper.GetInputInfo();
 
         // Check the media codecs are what we expect
