@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System;
 using System.Text.RegularExpressions;
 
@@ -11,19 +10,19 @@ namespace FFMpegWrapper.Models
     {
         private string StdOut;
 
-        public DateTime CreationTime { get; private set; }
+        public DateTime? CreationTime { get; private set; }
 
-        public TimeSpan Duration { get; private set; }
+        public TimeSpan? Duration { get; private set; }
 
         public string Bitrate { get; private set; }
 
-        public VCodec VideoCodec { get; private set; }
+        public VCodec? VideoCodec { get; private set; }
 
-        public ACodec AudioCodec { get; private set; }
+        public ACodec? AudioCodec { get; private set; }
 
         public string Resolution { get; private set; }
 
-        public double Fps { get; private set; }
+        public double? Fps { get; private set; }
 
         public MediaFileInfo(string stdOut)
         {
@@ -33,7 +32,6 @@ namespace FFMpegWrapper.Models
 
         private void ParseStdOut()
         {
-            System.Console.WriteLine(StdOut);
             CreationTime = ParseCreationDate();
             Duration = ParseDuration();
             Bitrate = ParseBitrate();
@@ -43,20 +41,28 @@ namespace FFMpegWrapper.Models
             Fps = ParseFps();
         }
 
-        private DateTime ParseCreationDate()
+        private DateTime? ParseCreationDate()
         {
             var creationDateRegex = new Regex(@"(?m)(?i)creation_time .*: (.*)$");
             var creationMatch = creationDateRegex.Match(StdOut);
             var match = creationMatch.Groups[1].Value;
-            return DateTime.Parse(match);
+            if (DateTime.TryParse(match, out DateTime result))
+            {
+                return result;
+            }
+            return null;
         }
 
-        private TimeSpan ParseDuration()
+        private TimeSpan? ParseDuration()
         {
             var durationRegex = new Regex(@"(?m)(?i) duration: (.*), start");
             var durationMatch = durationRegex.Match(StdOut);
             var match = durationMatch.Groups[1].Value;
-            return TimeSpan.Parse(match);
+            if (TimeSpan.TryParse(match, out TimeSpan result))
+            {
+                return result;
+            }
+            return null;
         }
 
         private string ParseBitrate()
@@ -67,20 +73,28 @@ namespace FFMpegWrapper.Models
             return match;
         }
 
-        private VCodec ParseVideoCodec()
+        private VCodec? ParseVideoCodec()
         {
             var videoCodecRegex = new Regex(@"(?m)(?i): Video: (\w+)");
             var videoCodecMatch = videoCodecRegex.Match(StdOut);
             var match = videoCodecMatch.Groups[1].Value;
-            return (VCodec)Enum.Parse(typeof(VCodec), match);
+            if (Enum.TryParse(typeof(VCodec), match, true, out object result))
+            {
+                return (VCodec)result;
+            }
+            return VCodec.none;
         }
 
-        private ACodec ParseAudioCodec()
+        private ACodec? ParseAudioCodec()
         {
             var audioCodecRegex = new Regex(@"(?m)(?i): Audio: (\w+)");
             var audioCodecMatch = audioCodecRegex.Match(StdOut);
             var match = audioCodecMatch.Groups[1].Value;
-            return (ACodec)Enum.Parse(typeof(ACodec), match);
+            if (Enum.TryParse(typeof(ACodec), match, true, out object result))
+            {
+                return (ACodec)result;
+            }
+            return null;
         }
 
         private string ParseResolution()
@@ -91,13 +105,16 @@ namespace FFMpegWrapper.Models
             return match;
         }
 
-        private double ParseFps()
+        private double? ParseFps()
         {
             var fpsRegex = new Regex(@"(?m)(?i), (\d{1,}\.?\d{1,3}?) fps");
             var fpsMatch = fpsRegex.Match(StdOut);
             var match = fpsMatch.Groups[1].Value;
-            System.Console.WriteLine(match);
-            return double.Parse(match);
+            if (double.TryParse(match, out double result))
+            {
+                return result;
+            }
+            return null;
         }
     }
 }
