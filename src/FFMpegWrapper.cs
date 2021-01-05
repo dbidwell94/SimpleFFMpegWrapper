@@ -16,11 +16,13 @@ namespace FFMpegWrapper
 
         public FileInfo OutputFile { get; private set; }
 
-        public VideoCodec OutputVideoCodec { get; private set; } = VideoCodec.none;
+        public VideoCodec OutputVideoCodec { get; private set; } = VideoCodec.copy;
 
-        public AudioCodec OutputAudioCodec { get; private set; } = AudioCodec.none;
+        public AudioCodec OutputAudioCodec { get; private set; } = AudioCodec.copy;
 
         public CpuUsed ConverionCpusUsed { get; private set; } = CpuUsed.One;
+
+        public FrameRate OutputFrameRate { get; private set; } = FrameRate.DEFAULT;
 
         public Wrapper()
         {
@@ -68,8 +70,18 @@ namespace FFMpegWrapper
             return this;
         }
 
+        public Wrapper OutputFramerate(FrameRate rate)
+        {
+            OutputFrameRate = rate;
+            return this;
+        }
+
         public async Task<MediaFileInfo> GetInputInfo()
         {
+            if (!File.Exists(Path.Combine(FFMpegLocation, FFMpegFilenames.FFProbe)))
+            {
+                throw new FileNotFoundException("You do not have FFMpeg downloaded. Did you forget to call VerifyOrDownload()?");
+            }
             if (InputFile == null)
             {
                 throw new FileNotFoundException("InputFile not specified. To set call wrapper.Input(file)");

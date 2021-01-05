@@ -1,11 +1,11 @@
 namespace FFMpegWrapper.Options
 {
     /// <summary>
-    /// Supported audio codecs for SimpleFFMpegWrapper
+    /// This enum maps to the -c:a parameter of FFMpeg
     /// </summary>
     public enum AudioCodec
     {
-        none,
-        vorbis
+        vorbis,
+        copy
     }
 }

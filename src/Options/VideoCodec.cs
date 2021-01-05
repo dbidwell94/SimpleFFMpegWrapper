@@ -1,15 +1,15 @@
 namespace FFMpegWrapper.Options
 {
     /// <summary>
-    /// Supported Video Codecs for SimpleFFMpegWrapper
+    /// This enum maps to the -c:v parameter of FFMpeg
     /// </summary>
     public enum VideoCodec
     {
-        none,
         vp8,
         vp9,
         mov,
         avi,
-        flv
+        flv,
+        copy
     }
 }

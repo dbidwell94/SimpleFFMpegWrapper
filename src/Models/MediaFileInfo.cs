@@ -82,7 +82,7 @@ namespace FFMpegWrapper.Models
             {
                 return (VCodec)result;
             }
-            return VCodec.none;
+            return null;
         }
 
         private ACodec? ParseAudioCodec()
